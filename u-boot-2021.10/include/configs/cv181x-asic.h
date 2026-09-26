@@ -174,13 +174,10 @@
  * CONFIG_USB, CONFIG_USB_GADGET and CONFIG_USB_GADGET_DWC2_OTG
  */
 
-#ifdef CONFIG_USB_GADGET
-#define CONFIG_USB_FUNCTION_FASTBOOT
-#define CONFIG_USB_GADGET_DOWNLOAD
-#define CONFIG_G_DNL_MANUFACTURER "Cvitek"
-#define CONFIG_G_DNL_VENDOR_NUM   0x18d1
-#define CONFIG_G_DNL_PRODUCT_NUM 0x4ee0
-#endif
+/* USB gadget fastboot + G_DNL IDs are now set via Kconfig in the board defconfig
+ * (USB_FUNCTION_FASTBOOT, USB_GADGET_DOWNLOAD, USB_GADGET_MANUFACTURER/VENDOR_NUM/
+ * PRODUCT_NUM). Defining them ad-hoc here collided (redefine -Werror) and tripped
+ * u-boot's "add new CONFIG via Kconfig" check once CONFIG_USB_GADGET was enabled. */
 
 #define CONFIG_IPADDR			192.168.0.3
 #define CONFIG_NETMASK			255.255.255.0
