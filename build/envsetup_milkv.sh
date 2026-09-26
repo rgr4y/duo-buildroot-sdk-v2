@@ -640,22 +640,38 @@ function build_all()
   if [[ "$BOARD" != "fpga" ]] && [[ "$BOARD" != "palladium" ]]; then
     build_osdrv || return $?
     build_3rd_party || return $?
-    build_middleware || return $?
-    build_cvi_rtsp || return $?
-    build_tpu_sdk || return $?
-    if [ "$TPU_REL" = 1 ]; then
-      build_ive_sdk || return $?
-      build_ivs_sdk || return $?
-      build_tdl_sdk || return $?
+    # --- camera/imaging/NPU stack: skipped by default (export MILKV_CAMERA=1 to build) ---
+    # Headless Duo256m ships no camera. These build unused ISP/MPI/RTSP/TPU userspace
+    # and imaging/NPU .ko we never install. The SD boot artifacts we consume
+    # (fip.bin, rawimages/boot.sd, base cv181x .ko) come from build_uboot/kernel/osdrv
+    # above; pack_system is a no-op for STORAGE_TYPE=sd, so skipping is safe.
+    if [ "${MILKV_CAMERA:-0}" = 1 ]; then
+      build_middleware || return $?
+      build_cvi_rtsp || return $?
+      build_tpu_sdk || return $?
+      if [ "$TPU_REL" = 1 ]; then
+        build_ive_sdk || return $?
+        build_ivs_sdk || return $?
+        build_tdl_sdk || return $?
+      fi
+      build_pqtool_server || return $?
     fi
-    build_pqtool_server || return $?
   fi
   pack_cfg || return $?
-  pack_rootfs || return $?
-  pack_data || return $?
+  # buildroot rootfs / jffs2 data / OTA upgrade packaging: skipped by default
+  # (export MILKV_SDK_ROOTFS=1 to build them). We replace the SDK's buildroot
+  # rootfs with an Alpine rootfs assembled by our own build.sh + genimage, so
+  # these are unused; br-rootfs-pack also fails building host pkgs on this host.
+  # fip.bin + rawimages/boot.sd + kernel .ko are already produced above.
+  if [ "${MILKV_SDK_ROOTFS:-0}" = 1 ]; then
+    pack_rootfs || return $?
+    pack_data || return $?
+  fi
   pack_system || return $?
   copy_tools || return $?
-  pack_upgrade || return $?
+  if [ "${MILKV_SDK_ROOTFS:-0}" = 1 ]; then
+    pack_upgrade || return $?
+  fi
 )}
 
 function clean_all()
