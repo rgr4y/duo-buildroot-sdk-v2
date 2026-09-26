@@ -91,3 +91,10 @@
 &uart3 {
 	status = "okay";
 };
+
+
+&ethernet0 {
+	/* Static MAC: SG2002 has no fused MAC, stmmac randomizes each boot otherwise.
+	 * Locally-administered unicast (first octet a2: bit1 set, bit0 clear). */
+	local-mac-address = [a2 b4 86 e9 15 24];
+};
