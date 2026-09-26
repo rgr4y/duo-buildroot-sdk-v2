@@ -90,3 +90,6 @@ clean_all: clean
 cleanall: clean_all
 
 -include $(DEPS)
+
+# fix parallel-make race: extract 3rdparty .o before link
+$(TARGET_A) $(TARGET_SO): | prepare_3rdparty_module  # order-only prepare
