@@ -248,3 +248,15 @@ CONFIG_DYNAMIC_DEBUG=y
 # CONFIG_RCU_TRACE is not set
 # CONFIG_FTRACE is not set
 # CONFIG_RUNTIME_TESTING_MENU is not set
+
+# Bluetooth (Classic BR/EDR + LE) over USB (Realtek combo dongles)
+CONFIG_BT=y
+CONFIG_BT_HCIBTUSB=y
+CONFIG_BT_HCIBTUSB_RTL=y
+CONFIG_BT_RFCOMM=y
+CONFIG_BT_BNEP=y
+CONFIG_BT_HIDP=y
+# HDMI CEC not needed (no display/TV control)
+# CONFIG_MEDIA_CEC_SUPPORT is not set
+CONFIG_TUN=y
+CONFIG_NET_CORE=y
