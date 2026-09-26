@@ -226,7 +226,11 @@ KERNEL_CONFIG_NAME := ${BRAND}_${PROJECT_FULLNAME}_rls_defconfig
 endif
 endif
 
-KERNEL_VERSION ?= -tag-$(shell git -C ${KERNEL_PATH} describe --exact-match HEAD 2>/dev/null)
+# Append -tag-<gitdescribe> only when the kernel tree is a git checkout on an
+# exact tag. The SDK ships as a tarball (no .git), so the original unconditional
+# `-tag-` left a bare "5.10.4-tag-" in uname / the modules dir. The sed drops the
+# suffix entirely when git describe is empty -> clean "5.10.4".
+KERNEL_VERSION ?= $(shell git -C ${KERNEL_PATH} describe --exact-match HEAD 2>/dev/null | sed 's/^/-tag-/')
 
 ${KERNEL_PATH}/${KERNEL_OUTPUT_FOLDER}:
 	${Q}mkdir -p $@
