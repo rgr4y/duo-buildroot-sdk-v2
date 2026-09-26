@@ -3,12 +3,36 @@
 #include "cv181x_asic_qfn.dtsi"
 #include "cv181x_asic_sd.dtsi"
 #include "cv181x_default_memmap.dtsi"
+#include <dt-bindings/interrupt-controller/irq.h>   /* IRQ_TYPE_LEVEL_LOW (also pulled in transitively) */
 
 / {
 	model = "Milk-V Duo256M";
 
 	sd:cv-sd@4310000 {
 		max-frequency = <10000000>;
+	};
+
+	/* 8 MHz crystal on the external MCP2515 CAN module */
+	can_osc: can-clk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <8000000>;
+	};
+
+	/* Heartbeat LED on GP pin -> sysfs gpio354 = porte line 2 (base 352 chip
+	 * 5021000.gpio, offset 2). Driven by leds-gpio + ledtrig-heartbeat, both
+	 * built as MODULES: at boot the LED double-blinks (heartbeat); to reclaim the
+	 * raw pin at /sys/class/gpio/gpio354, `rmmod ledtrig_heartbeat leds_gpio`.
+	 * Flip to GPIO_ACTIVE_LOW if the LED logic is inverted. NOTE: porte line 2's
+	 * pad must be muxed to GPIO in U-Boot (as gpio354 already is). */
+	leds {
+		compatible = "gpio-leds";
+		led-heartbeat {
+			label = "heartbeat";
+			gpios = <&porte 2 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			default-state = "off";
+		};
 	};
 };
 
@@ -24,11 +48,31 @@
 	status = "disabled";
 };
 
+/* MCP2515 external CAN controller on SPI2, native CS0.
+ * Pins already muxed by U-Boot cvi_board_init.c (no DTS pinctrl on cv181x):
+ *   SCK  = GP6  / SD1_CLK  / header pin 9
+ *   MOSI = GP7  / SD1_CMD  / header pin 10
+ *   MISO = GP8  / SD1_D0   / header pin 11
+ *   CS0  = GP9  / SD1_D3   / header pin 12
+ *   INT  = GP14 / XGPIOA[14] / header pin 19 (active-low, level)
+ * WIRING: pins 9-12/19 are 3.3V, NOT 5V-tolerant. Do NOT hang a 5V-powered
+ * MCP2515+TJA1050 module directly on them -- use a 3.3V-native module
+ * (SN65HVD230) or level-shift + split-rail. See docs.
+ */
 &spi2 {
 	status = "okay";
+	num-cs = <1>;
 
-	spidev@0 {
-		status = "okay";
+	/* drop the generic spidev on CS0 (from cv181x_asic_qfn.dtsi); CAN takes it */
+	/delete-node/ spidev@0;
+
+	can0: can@0 {
+		compatible = "microchip,mcp2515";
+		reg = <0>;                             /* native SPI2 CS0 */
+		spi-max-frequency = <10000000>;        /* MCP2515 SPI ceiling */
+		clocks = <&can_osc>;                   /* 8 MHz */
+		interrupt-parent = <&porta>;           /* XGPIOA irq controller */
+		interrupts = <14 IRQ_TYPE_LEVEL_LOW>;  /* XGPIOA[14] / GP14 / pin 19 */
 	};
 };
 
@@ -47,4 +91,3 @@
 &uart3 {
 	status = "okay";
 };
-
