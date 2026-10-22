@@ -6,6 +6,20 @@
 
 / {
 	model = "Milk-V Duo256M";
+
+	/* Onboard blue LED: gpio354 = porte line 2 (same pin as Milk-V's stock
+	 * blink.sh, active high; pad muxed to GPIO by U-Boot cvi_board_init.c).
+	 * leds-gpio + ledtrig-heartbeat are MODULES: `rmmod ledtrig_heartbeat
+	 * leds_gpio` hands the pin back to /sys/class/gpio/gpio354. */
+	leds {
+		compatible = "gpio-leds";
+		led-heartbeat {
+			label = "heartbeat";
+			gpios = <&porte 2 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
+			default-state = "off";
+		};
+	};
 };
 
 &mipi_rx {
