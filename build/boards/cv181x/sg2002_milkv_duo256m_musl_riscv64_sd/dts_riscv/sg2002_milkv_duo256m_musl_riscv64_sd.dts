@@ -44,8 +44,3 @@
 	status = "okay";
 };
 
-
-// force host-only for USB hotplug diagnosis (kills device/gadget mode)
-&usb {
-	dr_mode = "host";
-};
